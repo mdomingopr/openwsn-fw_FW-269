@@ -12,6 +12,8 @@
 #include "openqueue.h"
 #include "neighbors.h"
 
+#include "otf.h"
+
 //=========================== defines =========================================
 
 const uint8_t r6t_path0[] = "6t";
@@ -80,6 +82,7 @@ owerror_t r6t_receive(
          msg->payload                  = &(msg->packet[127]);
          msg->length                   = 0;
          
+#if 0
          // get preferred parent
          foundNeighbor = neighbors_getPreferredParentEui64(&neighbor);
          if (foundNeighbor==FALSE) {
@@ -87,12 +90,14 @@ owerror_t r6t_receive(
             coap_header->Code          = COAP_CODE_RESP_PRECONDFAILED;
             break;
          }
-         
          // call sixtop
          sixtop_addCells(
             &neighbor,
             1
          );
+#else 
+         otf_addCell(0, msg->l2_scheduleIE_numOfCells);
+#endif
          
          // set the CoAP header
          coap_header->Code             = COAP_CODE_RESP_CHANGED;
