@@ -787,6 +787,7 @@ void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
          sixtop_vars.six2six_state = SIX_IDLE;
          
          // notify OTF
+         printf("*********%d %d\n", msg->l2_scheduleIE_frameID, msg->l2_scheduleIE_numOfCells);
          otf_notif_addedCell(0, 1); /* \TODO mdomingo: extract info from packet*/
          
          break;

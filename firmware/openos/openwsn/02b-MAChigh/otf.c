@@ -7,16 +7,9 @@
 
 //=========================== variables =======================================
 
-
-
-
-
-
-
 otf_tracks_t   otf_tracks;
 
 //=========================== prototypes ======================================
-
 
 void otf_addCell_task(void);
 void otf_removeCell_task(void);
