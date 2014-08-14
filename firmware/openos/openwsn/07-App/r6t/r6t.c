@@ -96,7 +96,8 @@ owerror_t r6t_receive(
             1
          );
 #else 
-         otf_addCell(0, msg->l2_scheduleIE_numOfCells);
+         //otf_addCell(0, msg->l2_scheduleIE_numOfCells);
+         otf_addCell(0, 1);
 #endif
          
          // set the CoAP header

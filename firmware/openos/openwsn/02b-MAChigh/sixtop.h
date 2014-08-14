@@ -13,6 +13,8 @@
 
 //=========================== define ==========================================
 
+#define SIXTOP_USEIMPROVED_SCHEDULER
+
 enum sixtop_CommandID_num{
    SIXTOP_SOFT_CELL_REQ                = 0x00,
    SIXTOP_SOFT_CELL_RESPONSE           = 0x01,

@@ -20,8 +20,8 @@ The superframe repears over time and can be arbitrarly long.
 #define SUPERFRAME_LENGTH    11 //should be 101
 
 #define NUMADVSLOTS          1
-#define NUMSHAREDTXRX        5 
-#define NUMSERIALRX          3
+#define NUMSHAREDTXRX        2 
+#define NUMSERIALRX          1
 
 /**
 \brief Maximum number of active slots in a superframe.
@@ -33,7 +33,16 @@ in that table; a slot is "active" when it is not of type CELLTYPE_OFF.
 Set this number to the exact number of active slots you are planning on having
 in your schedule, so not to waste RAM.
 */
-#define MAXACTIVESLOTS       (NUMADVSLOTS+NUMSHAREDTXRX+NUMSERIALRX)
+/* \TODO mdomingo: modify this value when increasing the superframe length */
+#define MAXACTIVESLOTS       SUPERFRAME_LENGTH //(NUMADVSLOTS+NUMSHAREDTXRX+NUMSERIALRX)
+
+#if (MAXACTIVESLOTS < (NUMADVSLOTS+NUMSHAREDTXRX+NUMSERIALRX) )
+    #error The maximum number of active slots should be higuer or equal than the ones initially activated
+#endif
+
+#if (MAXACTIVESLOTS > SUPERFRAME_LENGTH)
+    #error The maximum number of active slots should be smaller or equal than the superframe length
+#endif
 
 /**
 \brief Minimum backoff exponent.
@@ -148,6 +157,7 @@ owerror_t          schedule_removeActiveSlot(
    open_addr_t*         neighbor
 );
 bool               schedule_isSlotOffsetAvailable(uint16_t slotOffset);
+bool               schedule_isSlotOffsetRx(uint16_t slotOffset);
 
 // from IEEE802154E
 void               schedule_syncSlotOffset(slotOffset_t targetSlotOffset);

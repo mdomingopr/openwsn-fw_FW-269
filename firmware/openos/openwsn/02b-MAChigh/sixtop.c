@@ -1140,16 +1140,22 @@ bool sixtop_candidateAddCellList(
    ){
    uint8_t i;
    uint8_t numCandCells;
+#ifdef SIXTOP_USEIMPROVED_SCHEDULER 
+   uint8_t firstRX;
+   slotinfo_element_t   info;
+#endif
    
    *type = 1;
    *frameID = SCHEDULE_MINIMAL_6TISCH_DEFAULT_SLOTFRAME_HANDLE;
    *flag = 1; // the cells listed in cellList are available to be schedule.
    
+#ifndef SIXTOP_USEIMPROVED_SCHEDULER 
    numCandCells=0;
    for(i=0;i<MAXACTIVESLOTS;i++){
       if(schedule_isSlotOffsetAvailable(i)==TRUE){
          cellList[numCandCells].tsNum       = i;
          cellList[numCandCells].choffset    = 0;
+/* MDP: Why to put is as TX? Should be usage */         
          cellList[numCandCells].linkoptions = CELLTYPE_TX;
          numCandCells++;
          if(numCandCells==SCHEDULEIEMAXNUMCELLS){
@@ -1157,7 +1163,42 @@ bool sixtop_candidateAddCellList(
          }
       }
    }
-   
+#else
+   numCandCells=0;
+   firstRX = 0;
+   for(i=0;i<MAXACTIVESLOTS;i++){
+      if(TRUE == schedule_isSlotOffsetRx(i)){
+          firstRX = i;
+          break;
+      }
+   }
+//printf("\n---- FRX: %d\n", firstRX);
+   for(i=firstRX;i<firstRX+MAXACTIVESLOTS;i++){
+      if(TRUE == schedule_isSlotOffsetAvailable(i%MAXACTIVESLOTS)){
+//printf("---- Available: %d\n", i%MAXACTIVESLOTS);
+         cellList[numCandCells].tsNum       = i%MAXACTIVESLOTS;
+         cellList[numCandCells].choffset    = 0;
+/* MDP: Why to put is as TX? Should be usage */         
+         cellList[numCandCells].linkoptions = CELLTYPE_TX;
+         numCandCells++;
+         if(numCandCells==SCHEDULEIEMAXNUMCELLS){
+            break;
+         }
+
+      }
+   }
+#endif
+
+
+
+
+
+
+
+
+
+
+
    if (numCandCells==0) {
       return FALSE;
    } else {

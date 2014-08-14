@@ -69,14 +69,16 @@ void schedule_init() {
    
    // serial RX slot(s)
    memset(&temp_neighbor,0,sizeof(temp_neighbor));
-   schedule_addActiveSlot(
-      running_slotOffset,         // slot offset
-      CELLTYPE_SERIALRX,          // type of slot
-      FALSE,                      // shared?
-      0,                          // channel offset
-      &temp_neighbor              // neighbor
-   );
-   running_slotOffset++;
+   for (i=0;i<NUMSERIALRX;i++) {
+      schedule_addActiveSlot(
+         running_slotOffset,         // slot offset
+         CELLTYPE_SERIALRX,          // type of slot
+         FALSE,                      // shared?
+         0,                          // channel offset
+         &temp_neighbor              // neighbor
+      );
+      running_slotOffset++;
+   }
 }
 
 /**
@@ -398,6 +400,31 @@ bool schedule_isSlotOffsetAvailable(uint16_t slotOffset){
    ENABLE_INTERRUPTS();
    
    return TRUE;
+}
+
+bool schedule_isSlotOffsetRx(uint16_t slotOffset){
+   
+   scheduleEntry_t* scheduleWalker;
+   
+   INTERRUPT_DECLARATION();
+   DISABLE_INTERRUPTS();
+   
+   scheduleWalker = schedule_vars.currentScheduleEntry;
+   do {
+      if(slotOffset == scheduleWalker->slotOffset){
+         if(CELLTYPE_RX == scheduleWalker->type){
+            return TRUE;
+         }
+         else{
+            return FALSE;
+         }
+      }
+      scheduleWalker = scheduleWalker->next;
+   }while(scheduleWalker!=schedule_vars.currentScheduleEntry);
+   
+   ENABLE_INTERRUPTS();
+   
+   return FALSE;
 }
 
 //=== from IEEE802154E: reading the schedule and updating statistics

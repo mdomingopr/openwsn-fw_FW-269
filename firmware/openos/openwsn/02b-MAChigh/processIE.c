@@ -283,16 +283,17 @@ port_INLINE uint8_t processIE_prependSheduleIE(
    
    //===== cell list
    
-   for(i=0;i<SCHEDULEIEMAXNUMCELLS;i++) {
-      if(cellList[i].linkoptions != CELLTYPE_OFF){
+ /* mdomingo: Modified to send the cells in order. */
+   for(i=SCHEDULEIEMAXNUMCELLS;i>0;i--) {
+      if(cellList[i-1].linkoptions != CELLTYPE_OFF){
          // cellobjects:
          // - [2B] slotOffset
          // - [2B] channelOffset
          // - [1B] link_type
          packetfunctions_reserveHeaderSize(pkt,5); 
-         packetfunctions_htons(cellList[i].tsNum,    &(pkt->payload[0])); 
-         packetfunctions_htons(cellList[i].choffset, &(pkt->payload[2]));
-         pkt->payload[4] = cellList[i].linkoptions;
+         packetfunctions_htons(cellList[i-1].tsNum,    &(pkt->payload[0])); 
+         packetfunctions_htons(cellList[i-1].choffset, &(pkt->payload[2]));
+         pkt->payload[4] = cellList[i-1].linkoptions;
          len += 5;
          numOfCells++;
       }

@@ -72,6 +72,7 @@ static PyObject* OpenMote_getState(OpenMote* self) {
    PyObject* openserial_vars;
    PyObject* scheduler_vars;
    PyObject* scheduler_dbg;
+   PyObject* otf_tracks;
    
    returnVal = PyDict_New();
    
@@ -130,6 +131,11 @@ static PyObject* OpenMote_getState(OpenMote* self) {
    sixtop_vars = PyDict_New();
    // TODO
    PyDict_SetItemString(returnVal, "sixtop_vars", sixtop_vars);
+   
+   // otf_tracks
+   otf_tracks = PyDict_New();
+   // TODO
+   PyDict_SetItemString(returnVal, "otf_tracks", otf_tracks);
    
    // schedule_vars
    schedule_vars = PyDict_New();

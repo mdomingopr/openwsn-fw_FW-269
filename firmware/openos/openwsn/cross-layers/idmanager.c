@@ -239,6 +239,8 @@ bool debugPrint_id() {
    output.my64bID   = idmanager_vars.my64bID;
    output.myPANID   = idmanager_vars.myPANID;
    output.myPrefix  = idmanager_vars.myPrefix;
+
+
    openserial_printStatus(STATUS_ID,(uint8_t*)&output,sizeof(debugIDManagerEntry_t));
    return TRUE;
 }
