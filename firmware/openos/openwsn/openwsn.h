@@ -313,6 +313,7 @@ typedef struct {
    uint8_t*      l2_scheduleIE_cellObjects;      // pointer to the start of cell Objects in scheduleIE
    uint8_t       l2_scheduleIE_numOfCells;       // number of cells were going to be scheduled or removed.
    uint8_t       l2_scheduleIE_frameID;          // frameID in scheduleIE
+   uint8_t*      l2_trackIdIE;                   // pointer to the start of the trackIdIE
    uint8_t*      l2_ASNpayload;                  // pointer to the ASN in EB
    uint8_t       l2_joinPriority;                // the join priority received in EB
    bool          l2_IEListPresent;               //did have IE field?

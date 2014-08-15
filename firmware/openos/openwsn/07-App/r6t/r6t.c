@@ -97,7 +97,12 @@ owerror_t r6t_receive(
          );
 #else 
          //otf_addCell(0, msg->l2_scheduleIE_numOfCells);
-         otf_addCell(0, 1);
+         /* \TODO mdomingo: extract trackId and number of cells */
+         sixtop_trackId_t trackId;
+         trackId.ownerInstId = 0;
+         trackId.trackOwnerAddr_16b[0] = idmanager_getMyID(ADDR_16B)->addr_16b[0];
+         trackId.trackOwnerAddr_16b[1] = idmanager_getMyID(ADDR_16B)->addr_16b[1];
+         otf_addCell(&trackId, 1);
 #endif
          
          // set the CoAP header

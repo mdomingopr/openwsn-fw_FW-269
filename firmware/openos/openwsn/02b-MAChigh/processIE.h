@@ -109,18 +109,34 @@ typedef struct{
    uint8_t         numOfLinks;
 } bandwidth_IE_ht;
 
+
+/**
+\brief 6top Bandwidth IE
+
+http://tools.ietf.org/html/draft-wang-6tisch-6top-sublayer-01#section-4.1.1.6
+*/
+
+typedef struct{
+   sixtop_trackId_t trackId;
+} trackId_IE_ht;
+
 /**
 \brief 6top Generic Schedule IE
 
 http://tools.ietf.org/html/draft-wang-6tisch-6top-sublayer-01#section-4.1.1.8
 */
+typedef enum{
+   SCHEDULE_IE_CELL_SET_TLV = 1,
+   SCHECULE_IE_MATRIX_TLV = 2,
+} schedule_ie_body_type_t;
+
 typedef struct{
-   uint8_t         type;
-   uint8_t         length;
-   uint8_t         frameID;
-   uint8_t         numberOfcells;
-   bool            flag;
-   cellInfo_ht     cellList[SCHEDULEIEMAXNUMCELLS];
+   schedule_ie_body_type_t  type;
+   uint8_t                 length;
+   uint8_t                 frameID;
+   uint8_t                 numberOfcells;
+   bool                    flag;
+   cellInfo_ht             cellList[SCHEDULEIEMAXNUMCELLS];
 } schedule_IE_ht;
 
 END_PACK
@@ -151,13 +167,18 @@ uint8_t          processIE_prependBandwidthIE(
    uint8_t              numOfLinks, 
    uint8_t              slotframeID
 );
-uint8_t          processIE_prependSheduleIE(
-   OpenQueueEntry_t*    pkt,
-   uint8_t              type,
-   uint8_t              frameID,
-   uint8_t              flag,
-   cellInfo_ht*         cellList
+uint8_t          processIE_prependScheduleIE(
+   OpenQueueEntry_t* pkt,
+   schedule_ie_body_type_t  type,
+   uint8_t                 frameID,
+   uint8_t                 flag,
+   cellInfo_ht*            cellList
 );
+uint8_t          processIE_prependTrackIdIE(
+   OpenQueueEntry_t* pkt, 
+   sixtop_trackId_t* trackId
+);
+
 
 //===== retrieve IEs
 
@@ -179,6 +200,11 @@ void             processIE_retrieveSheduleIE(
    OpenQueueEntry_t*    pkt,
    uint8_t *            ptr,
    schedule_IE_ht*      schedule_ie
+);
+void processIE_retrieveTrackIdIE(
+   OpenQueueEntry_t* pkt,
+   uint8_t *         ptr,
+   trackId_IE_ht*    trackIdInfo
 );
 
 #endif

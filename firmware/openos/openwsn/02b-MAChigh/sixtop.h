@@ -59,13 +59,21 @@ typedef struct {
    uint8_t              commandID;
 } sixtop_vars_t;
 
+
 //=========================== prototypes ======================================
 
 // admin
 void      sixtop_init(void);
 void      sixtop_setKaPeriod(uint16_t kaPeriod);
 // scheduling
-void      sixtop_addCells(open_addr_t* neighbor, uint16_t numCells);
+//void      sixtop_addCells(open_addr_t* neighbor, uint16_t numCells);
+void sixtop_addCells (
+      uint8_t        slotFrameId, 
+      uint16_t       numCells, 
+      uint8_t        linkOption, 
+      open_addr_t*   targetNode, 
+      sixtop_trackId_t* trackId,
+      uint8_t        qos);
 void      sixtop_removeCell(open_addr_t*  neighbor);
 // from upper layer
 owerror_t sixtop_send(OpenQueueEntry_t *msg);

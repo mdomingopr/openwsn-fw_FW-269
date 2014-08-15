@@ -212,6 +212,70 @@ port_INLINE uint8_t processIE_prependOpcodeIE(
    return len;
 }
 
+/**
+ * \brief Adds the trackId IE information to a packet. It uses T=0
+ *
+ * \param pkt packet where to store the info
+ * \param ownerInstID id of the instance of the track
+ * \param trackOwnerAddr_16b address of the owner of the instance of the track
+ *
+ * \return lenght of the packet
+ */
+port_INLINE uint8_t processIE_prependTrackIdIE(
+      OpenQueueEntry_t* pkt, 
+      sixtop_trackId_t* trackId){
+   
+   uint8_t    len;
+   mlme_IE_ht mlme_subHeader;
+   
+   len = 0;
+  
+   //===== TrackOwnerAddr
+   
+   // reserve space
+   packetfunctions_reserveHeaderSize(pkt,2*sizeof(uint8_t));
+   
+   // write header
+   pkt->payload[0] = trackId->trackOwnerAddr_16b[0];
+   pkt->payload[1] = trackId->trackOwnerAddr_16b[1];
+   
+   len += 2;
+   
+   //===== OwnerInstId and rev
+   
+   // reserve space
+   packetfunctions_reserveHeaderSize(pkt,sizeof(uint8_t));
+   
+   // write header
+   *((uint8_t*)(pkt->payload)) = (trackId->ownerInstId << 2);
+   /* \TODO mdomingo rev? */
+   
+   len += 1;
+
+   // Record the position of the trackId
+   pkt->l2_trackIdIE = pkt->payload;
+  
+   //===== MLME IE header
+   
+   // reserve space
+   packetfunctions_reserveHeaderSize(pkt, sizeof(mlme_IE_ht));
+   
+   // prepare header
+   mlme_subHeader.length_subID_type  = 
+      len << IEEE802154E_DESC_LEN_SHORT_MLME_IE_SHIFT;
+   mlme_subHeader.length_subID_type |= 
+      (MLME_IE_SUBID_TRACKID << 
+         MLME_IE_SUBID_SHIFT) |
+      IEEE802154E_DESC_TYPE_SHORT;
+   
+   // copy header
+   pkt->payload[0] =  mlme_subHeader.length_subID_type       & 0xFF;
+   pkt->payload[1] = (mlme_subHeader.length_subID_type >> 8) & 0xFF;
+   
+   len += 2;
+  
+   return len;
+}
 port_INLINE uint8_t processIE_prependBandwidthIE(
       OpenQueueEntry_t* pkt, 
       uint8_t           numOfLinks, 
@@ -265,12 +329,23 @@ port_INLINE uint8_t processIE_prependBandwidthIE(
    return len;
 }
 
-port_INLINE uint8_t processIE_prependSheduleIE(
+/**
+ * \brief Adds the Schedule IE information inside a packet
+ *
+ * \param pkt packet to store the schedule ie info
+ * \param type type of schedule body
+ * \param frameID id of the frame slot
+ * \param flag 1 if the cellList contains the cells available. 0 if available cells are the ones not listed.
+ * \param cellList List of cells
+ *
+ * \return 
+ */
+port_INLINE uint8_t processIE_prependScheduleIE(
       OpenQueueEntry_t* pkt,
-      uint8_t           type,
-      uint8_t           frameID,
-      uint8_t           flag,
-      cellInfo_ht*      cellList
+      schedule_ie_body_type_t  type,
+      uint8_t                 frameID,
+      uint8_t                 flag,
+      cellInfo_ht*            cellList
    ){
    uint8_t    i;
    uint8_t    len;
@@ -280,7 +355,11 @@ port_INLINE uint8_t processIE_prependSheduleIE(
   
    len        = 0;
    numOfCells = 0;
-   
+  
+   if (1 != type) {  // Only is implemented the type 1: Cell Set TLF. The type 2 Schedule Matrix TLV is not.
+      return 0;
+   }
+
    //===== cell list
    
  /* mdomingo: Modified to send the cells in order. */
@@ -461,6 +540,38 @@ port_INLINE void processIE_retrieveOpcodeIE(
    *ptr=localptr; 
 } 
 
+/**
+ * \brief Retrieves the information of the trackId IE
+ *
+ * \param pkt packet
+ * \param ptr ?
+ * \param trackIdInfo Strut where to store the extracted info
+ *
+ * \return 
+ */
+port_INLINE void processIE_retrieveTrackIdIE(
+      OpenQueueEntry_t* pkt,
+      uint8_t *         ptr,
+      trackId_IE_ht*    trackIdInfo
+   ){
+   uint8_t localptr;
+   
+   localptr=*ptr; 
+  
+   // [1B] OwnerInstID
+   trackIdInfo->trackId.ownerInstId = *((uint8_t*)(pkt->payload)+localptr);
+   localptr++;
+
+   // [1B] TrackOwnerAddr[1]
+   trackIdInfo->trackId.trackOwnerAddr_16b[1] = *((uint8_t*)(pkt->payload)+localptr);
+   localptr++;
+   
+   // [1B] TrackOwnerAddr[0]
+   trackIdInfo->trackId.trackOwnerAddr_16b[0] = *((uint8_t*)(pkt->payload)+localptr);
+   localptr++;
+   
+   *ptr=localptr; 
+}
 port_INLINE void processIE_retrieveBandwidthIE(
       OpenQueueEntry_t* pkt,
       uint8_t *         ptr,

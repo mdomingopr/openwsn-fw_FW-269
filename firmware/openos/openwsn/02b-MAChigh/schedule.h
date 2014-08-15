@@ -83,16 +83,22 @@ typedef enum {
 } cellType_t;
 
 typedef struct {
-   slotOffset_t    slotOffset;
-   cellType_t      type;
-   bool            shared;
-   uint8_t         channelOffset;
-   open_addr_t     neighbor;
-   uint8_t         numRx;
-   uint8_t         numTx;
-   uint8_t         numTxACK;
-   asn_t           lastUsedAsn;
-   void*           next;
+   uint8_t        ownerInstId;
+   uint8_t       trackOwnerAddr_16b[2];
+} sixtop_trackId_t;
+
+typedef struct {
+   slotOffset_t      slotOffset;
+   cellType_t        type;
+   bool              shared;
+   uint8_t           channelOffset;
+   open_addr_t       neighbor;
+   sixtop_trackId_t  trackId;
+   uint8_t           numRx;
+   uint8_t           numTx;
+   uint8_t           numTxACK;
+   asn_t             lastUsedAsn;
+   void*             next;
 } scheduleEntry_t;
 
 BEGIN_PACK
@@ -143,7 +149,8 @@ owerror_t          schedule_addActiveSlot(
    cellType_t           type,
    bool                 shared,
    uint8_t              channelOffset,
-   open_addr_t*         neighbor
+   open_addr_t*         neighbor,
+   sixtop_trackId_t*    trackId
 );
 
 void               schedule_getSlotInfo(

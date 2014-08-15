@@ -26,7 +26,7 @@ typedef enum {
 
 typedef struct {
    otf_track_state_t state;
-   uint16_t          trackId;
+   sixtop_trackId_t  trackId;
    uint16_t          rxNumAllocatedCells;
    uint16_t          txNumAllocatedCells;
 } otf_track_t;
@@ -42,13 +42,13 @@ typedef struct {
 // admin
 void     otf_init(void);
 // notification from sixtop
-void     otf_notif_addedCell(uint16_t trackId, uint16_t numCells);
-void     otf_notif_removedCell(uint16_t trackId, uint16_t numCells);
-
+void     otf_notif_addedCell(sixtop_trackId_t* trackId, uint16_t numCells);
+void     otf_notif_removedCell(sixtop_trackId_t* trackId, uint16_t numCells);
 
 
 // COAP
-void     otf_addCell(uint16_t trackId, uint16_t numCells);
+void     otf_addCell(sixtop_trackId_t* trackId, uint16_t numCells);
+
 /**
 \}
 \}

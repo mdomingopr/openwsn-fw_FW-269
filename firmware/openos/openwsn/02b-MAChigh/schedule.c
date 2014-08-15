@@ -23,9 +23,10 @@ void schedule_resetEntry(scheduleEntry_t* pScheduleEntry);
 \post Call this function before calling any other function in this module.
 */
 void schedule_init() {
-   uint8_t         i;
-   slotOffset_t    running_slotOffset;
-   open_addr_t     temp_neighbor;
+   uint8_t           i;
+   slotOffset_t      running_slotOffset;
+   open_addr_t       temp_neighbor;
+   sixtop_trackId_t  trackId;
 
    // reset local variables
    memset(&schedule_vars,0,sizeof(schedule_vars_t));
@@ -42,13 +43,15 @@ void schedule_init() {
    
    // advertisement slot(s)
    memset(&temp_neighbor,0,sizeof(temp_neighbor));
+   memset(&trackId,0,sizeof(sixtop_trackId_t));
    for (i=0;i<NUMADVSLOTS;i++) {
       schedule_addActiveSlot(
          running_slotOffset,      // slot offset
          CELLTYPE_ADV,            // type of slot
          FALSE,                   // shared?
          0,                       // channel offset
-         &temp_neighbor           // neighbor
+         &temp_neighbor,          // neighbor
+         &trackId                 // track id
       );
       running_slotOffset++;
    } 
@@ -62,7 +65,8 @@ void schedule_init() {
          CELLTYPE_TXRX,           // type of slot
          TRUE,                    // shared?
          0,                       // channel offset
-         &temp_neighbor           // neighbor
+         &temp_neighbor,          // neighbor
+         &trackId                 // track id
       );
       running_slotOffset++;
    }
@@ -71,11 +75,12 @@ void schedule_init() {
    memset(&temp_neighbor,0,sizeof(temp_neighbor));
    for (i=0;i<NUMSERIALRX;i++) {
       schedule_addActiveSlot(
-         running_slotOffset,         // slot offset
-         CELLTYPE_SERIALRX,          // type of slot
-         FALSE,                      // shared?
-         0,                          // channel offset
-         &temp_neighbor              // neighbor
+         running_slotOffset,      // slot offset
+         CELLTYPE_SERIALRX,       // type of slot
+         FALSE,                   // shared?
+         0,                       // channel offset
+         &temp_neighbor,          // neighbor
+         &trackId                 // track id
       );
       running_slotOffset++;
    }
@@ -219,11 +224,12 @@ void  schedule_getSlotInfo(
    none)
 */
 owerror_t schedule_addActiveSlot(
-      slotOffset_t    slotOffset,
-      cellType_t      type,
-      bool            shared,
-      channelOffset_t channelOffset,
-      open_addr_t*    neighbor
+      slotOffset_t      slotOffset,
+      cellType_t        type,
+      bool              shared,
+      channelOffset_t   channelOffset,
+      open_addr_t*      neighbor,
+      sixtop_trackId_t* trackId
    ) {
    scheduleEntry_t* slotContainer;
    scheduleEntry_t* previousSlotWalker;
@@ -258,6 +264,7 @@ owerror_t schedule_addActiveSlot(
    slotContainer->shared                    = shared;
    slotContainer->channelOffset             = channelOffset;
    memcpy(&slotContainer->neighbor,neighbor,sizeof(open_addr_t));
+   memcpy(&slotContainer->trackId,trackId,sizeof(sixtop_trackId_t));
    
    // insert in circular list
    if (schedule_vars.currentScheduleEntry==NULL) {
