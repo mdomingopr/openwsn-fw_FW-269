@@ -91,11 +91,13 @@ bool          sixtop_candidateAddCellList(
    cellInfo_ht*         cellList
 );
 bool          sixtop_candidateRemoveCellList(
-   uint8_t*             type,
-   uint8_t*             frameID,
+   uint8_t              type,
+   uint8_t              frameID,
    uint8_t*             flag,
    cellInfo_ht*         cellList,
-   open_addr_t*         neighbor
+   open_addr_t*         neighbor,
+   sixtop_trackId_t*    trackId,
+   uint16_t             numCells
 );
 void          sixtop_addCellsByState(
    uint8_t              slotframeID,
@@ -286,7 +288,13 @@ void sixtop_addCells (
    opentimers_restart(sixtop_vars.timeoutTimerId);
 }
 
-void sixtop_removeCell(open_addr_t* neighbor){
+void sixtop_removeCells (
+      uint8_t        slotFrameId, 
+      uint16_t       numCells, 
+      uint8_t        linkOption, 
+      open_addr_t*   targetNode, 
+      sixtop_trackId_t* trackId) {
+
    OpenQueueEntry_t* pkt;
    bool              outcome;
    uint8_t           len;
@@ -306,12 +314,16 @@ void sixtop_removeCell(open_addr_t* neighbor){
    }
    
    // generate candidate cell list
+   type = SCHEDULE_IE_CELL_SET_TLV;
+   frameID = slotFrameId;
    outcome = sixtop_candidateRemoveCellList(
-      &type, 
-      &frameID,
+      type, 
+      frameID,
       &flag, 
       cellList, 
-      neighbor
+      neighbor,
+      trackId,
+      numCells
    );
    if(outcome == FALSE){
       return;
@@ -345,6 +357,11 @@ void sixtop_removeCell(open_addr_t* neighbor){
    
    // create packet
    len  = 0;
+   if (0x00 != trackId->trackOwnerAddr_16b[1] || 0x00 != trackId->trackOwnerAddr_16b[0]) {
+      printf("M%02X%02X: ", idmanager_getMyID(ADDR_16B)->addr_16b[0], idmanager_getMyID(ADDR_16B)->addr_16b[1]);
+      printf("--Addint TrackId Info\n");
+      len += processIE_prependTrackIdIE(pkt, trackId);
+   }
    len += processIE_prependScheduleIE(pkt,type,frameID, flag,cellList);
    len += processIE_prependOpcodeIE(pkt,SIXTOP_REMOVE_SOFT_CELL_REQUEST);
    processIE_prependMLMEIE(pkt,len);
@@ -1272,16 +1289,6 @@ bool sixtop_candidateAddCellList(
    }
 #endif
 
-
-
-
-
-
-
-
-
-
-
    if (numCandCells==0) {
       return FALSE;
    } else {
@@ -1289,34 +1296,54 @@ bool sixtop_candidateAddCellList(
    }
 }
 
+/**
+ * \brief 
+ *
+ * \param type
+ * \param frameID
+ * \param flag
+ * \param cellList
+ * \param neighbor
+ * \param trackId
+ * \param numCells
+ *
+ * \return 
+ */
 bool sixtop_candidateRemoveCellList(
-      uint8_t*     type,
-      uint8_t*     frameID,
-      uint8_t*     flag,
-      cellInfo_ht* cellList,
-      open_addr_t* neighbor
-   ){
+      uint8_t              type,
+      uint8_t              frameID,
+      uint8_t*             flag,
+      cellInfo_ht*         cellList,
+      open_addr_t*         neighbor,
+      sixtop_trackId_t*    trackId,
+      uint16_t             numCells
+){
+
    uint8_t              i;
    uint8_t              numCandCells;
    slotinfo_element_t   info;
-   
-   *type           = 1;
-   *frameID        = SCHEDULE_MINIMAL_6TISCH_DEFAULT_SLOTFRAME_HANDLE;
-   *flag           = 1;
   
-   numCandCells    = 0;
+   if (1 != frameID) {
+      return FALSE; //Only one frame is implemented
+   }
+
+   *flag = 1; // the cells listed in cellList are available to be removed.
+  
+   numCandCells = 0;
    for(i=0;i<MAXACTIVESLOTS;i++){
       schedule_getSlotInfo(i,neighbor,&info);
-      if(info.link_type == CELLTYPE_TX){
+      if(info.link_type == CELLTYPE_TX && TRUE == sixtop_is_same_trackId(trackId, &info.trackId)){
          cellList[numCandCells].tsNum       = i;
          cellList[numCandCells].choffset    = info.channelOffset;
          cellList[numCandCells].linkoptions = CELLTYPE_TX;
          numCandCells++;
-         break; // only delete one cell
+         if(SCHEDULEIEMAXNUMCELLS == numCandCells || numCells == numCandCells){
+            break;
+         }
       }
    }
    
-   if(numCandCells==0){
+   if(numCells != numCandCells){
       return FALSE;
    }else{
       return TRUE;
@@ -1441,4 +1468,23 @@ bool sixtop_areAvailableCellsToBeScheduled(
    }
    
    return available;
+}
+
+
+/**
+ * \brief Compare if two tracks ids are equal
+ *
+ * \param trackId1 first trackId to compare
+ * \param trackId2 second trackId to compare
+ *
+ * \return TRUE if both tracks id are the same. FALSE otherwise.
+ */
+bool sixtop_is_same_trackId(sixtop_trackId_t* trackId1, sixtop_trackId_t* trackId2) {
+   bool ret = FALSE;
+   if (trackId1->ownerInstId == trackId2->ownerInstId && 
+         trackId1->trackOwnerAddr_16b[0]== trackId2->trackOwnerAddr_16b[0] &&
+         trackId1->trackOwnerAddr_16b[1]== trackId2->trackOwnerAddr_16b[1]) {
+      ret = TRUE;
+   }
+   return ret;
 }

@@ -122,6 +122,7 @@ typedef struct {
   bool             shared;
   slotOffset_t     slotOffset;
   channelOffset_t  channelOffset;
+  sixtop_trackId_t trackId;
 }slotinfo_element_t;
 
 //=========================== variables =======================================

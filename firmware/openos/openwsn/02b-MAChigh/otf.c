@@ -149,6 +149,18 @@ void otf_addCell_internal(bool rxAdded, sixtop_trackId_t* trackId, uint16_t numC
    uint8_t trackPosition;
    printf("M%02X%02X: ", idmanager_getMyID(ADDR_16B)->addr_16b[0], idmanager_getMyID(ADDR_16B)->addr_16b[1]);
    printf("--OTF_ADDCELL_INTERNAL. Id: %d, NumCells: %d\n", trackId->ownerInstId, numCells);
+
+#ifdef OTF_REM_ADD_STRATEGY
+   if (TRUE == otf_find_or_create_track(trackId, &trackPosition)) {
+      sixtop_removeCells(
+         1,          // slotFrameId, 
+         numCells,   // numCells, 
+         0,          // linkOption, 
+                     // targetNode, /* \TODO mdomingo: what to put here? */ 
+         trackId);   // trackId
+   }
+#endif
+
    if (TRUE == otf_find_or_create_track(trackId, &trackPosition)) {
       if (TRUE == rxAdded) {
          otf_tracks.info[trackPosition].rxNumAllocatedCells = numCells;
@@ -184,23 +196,6 @@ void otf_addCell_internal(bool rxAdded, sixtop_trackId_t* trackId, uint16_t numC
    }
 }
 
-/**
- * \brief Compare if two tracks ids are equal
- *
- * \param trackId1 first trackId to compare
- * \param trackId2 second trackId to compare
- *
- * \return TRUE if both tracks id are the same. FALSE otherwise.
- */
-bool otf_is_same_trackId(sixtop_trackId_t* trackId1, sixtop_trackId_t* trackId2) {
-   bool ret = FALSE;
-   if (trackId1->ownerInstId == trackId2->ownerInstId && 
-         trackId1->trackOwnerAddr_16b[0]== trackId2->trackOwnerAddr_16b[0] &&
-         trackId1->trackOwnerAddr_16b[1]== trackId2->trackOwnerAddr_16b[1]) {
-      ret = TRUE;
-   }
-   return ret;
-}
 
 /**
  * \brief Search the position of a track locally.
@@ -214,7 +209,7 @@ bool otf_find_track(sixtop_trackId_t* trackId, uint8_t* trackPosition) {
    uint8_t i;
    bool trackFound = FALSE;
    for (i=0; i<OTF_MAX_NUMBER_OF_TRACKS && FALSE == trackFound; i++){    /* Search the track */
-      if (otf_is_same_trackId(&otf_tracks.info[i].trackId, trackId) && OTF_TRACK_IN_USE == otf_tracks.info[i].state) {
+      if (sixtop_is_same_trackId(&otf_tracks.info[i].trackId, trackId) && OTF_TRACK_IN_USE == otf_tracks.info[i].state) {
          trackFound = TRUE;
          *trackPosition = i;
       }
