@@ -79,6 +79,7 @@ void          sixtop_notifyReceiveLinkResponse(
 );
 void          sixtop_notifyReceiveRemoveLinkRequest(
    schedule_IE_ht*      schedule_ie,
+   trackId_IE_ht*       trackId_ie,
    open_addr_t*         addr
 );
 
@@ -309,7 +310,7 @@ void sixtop_removeCells (
    if (sixtop_vars.six2six_state!=SIX_IDLE){
       return;
    }
-   if (neighbor==NULL){
+   if (targetNode==NULL){
       return;
    }
    
@@ -321,7 +322,7 @@ void sixtop_removeCells (
       frameID,
       &flag, 
       cellList, 
-      neighbor,
+      targetNode,
       trackId,
       numCells
    );
@@ -350,7 +351,7 @@ void sixtop_removeCells (
       
    memcpy(
       &(pkt->l2_nextORpreviousHop),
-      neighbor,
+      targetNode,
       sizeof(open_addr_t)
    );
  
@@ -1037,7 +1038,7 @@ void sixtop_notifyReceiveCommand(
          if(sixtop_vars.six2six_state == SIX_IDLE){
             sixtop_vars.six2six_state = SIX_REMOVEREQUEST_RECEIVED;
           //received uResComand is remove link request
-             sixtop_notifyReceiveRemoveLinkRequest(schedule_ie,addr);
+             sixtop_notifyReceiveRemoveLinkRequest(schedule_ie,trackId_ie,addr);
         }
         break;
       default:
@@ -1196,6 +1197,7 @@ void sixtop_notifyReceiveLinkResponse(
 
 void sixtop_notifyReceiveRemoveLinkRequest(
    schedule_IE_ht* schedule_ie,
+   trackId_IE_ht*       trackId_ie,
    open_addr_t* addr){
    
    uint8_t numOfCells,frameID;
@@ -1210,7 +1212,11 @@ void sixtop_notifyReceiveRemoveLinkRequest(
    sixtop_removeCellsByState(frameID,numOfCells,cellList,addr);
    
    // notify OTF
-   otf_notif_removedCell(0, 1); /* \TODO mdomingo: parse arguments */
+   //printf("*********%d %d\n", msg->l2_scheduleIE_frameID, msg->l2_scheduleIE_numOfCells);
+   printf("********* %d\n", numOfCells);
+   //otf_notif_removedCell(msg->l2_trackIdIE, msg->l2_scheduleIE_numOfCells);
+   otf_notif_removedCell(trackId_ie, numOfCells);
+   //otf_notif_removedCell(0, 1); /* \TODO mdomingo: parse arguments */
    
    sixtop_vars.six2six_state = SIX_IDLE;
 
@@ -1481,9 +1487,12 @@ bool sixtop_areAvailableCellsToBeScheduled(
  */
 bool sixtop_is_same_trackId(sixtop_trackId_t* trackId1, sixtop_trackId_t* trackId2) {
    bool ret = FALSE;
+   printf("isSameTrackId\n");
+   printf("%d\n", trackId2->ownerInstId);
+   printf("%d\n", trackId1->ownerInstId);
    if (trackId1->ownerInstId == trackId2->ownerInstId && 
-         trackId1->trackOwnerAddr_16b[0]== trackId2->trackOwnerAddr_16b[0] &&
-         trackId1->trackOwnerAddr_16b[1]== trackId2->trackOwnerAddr_16b[1]) {
+         trackId1->trackOwnerAddr_16b[0] == trackId2->trackOwnerAddr_16b[0] &&
+         trackId1->trackOwnerAddr_16b[1] == trackId2->trackOwnerAddr_16b[1]) {
       ret = TRUE;
    }
    return ret;

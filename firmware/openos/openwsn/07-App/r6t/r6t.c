@@ -131,12 +131,11 @@ owerror_t r6t_receive(
             &neighbor
          );
 #else
-         sixtop_trackId_t trackId;
-         trackId.ownerInstId = 0;
-         trackId.trackOwnerAddr_16b[0] = idmanager_getMyID(ADDR_16B)->addr_16b[0];
-         trackId.trackOwnerAddr_16b[1] = idmanager_getMyID(ADDR_16B)->addr_16b[1];
-         //otf_addCell(&trackId, 1);
-         otf_removeCell(&trackId, 1);
+         sixtop_trackId_t trackIdR;
+         trackIdR.ownerInstId = 0;
+         trackIdR.trackOwnerAddr_16b[0] = idmanager_getMyID(ADDR_16B)->addr_16b[0];
+         trackIdR.trackOwnerAddr_16b[1] = idmanager_getMyID(ADDR_16B)->addr_16b[1];
+         otf_removeCell(&trackIdR, 1);
 
 #endif         
          // set the CoAP header

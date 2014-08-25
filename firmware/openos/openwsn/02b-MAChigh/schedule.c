@@ -203,7 +203,7 @@ void  schedule_getSlotInfo(
                info->link_type                 = slotContainer->type;
                info->shared                    = slotContainer->shared;
                info->channelOffset             = slotContainer->channelOffset;
-               memcpy(info->trackId, slotContainer->trackId, sizeof(sixtop_trackId_t));
+               memcpy(&info->trackId, &slotContainer->trackId, sizeof(sixtop_trackId_t));
                return; //as this is an update. No need to re-insert as it is in the same position on the list.
         }
         slotContainer++;

@@ -19,7 +19,7 @@
 typedef enum {
    OTF_TRACK_NOT_USED   = 0x00,           // The bundle is not used
    OTF_TRACK_ADDING_CELL_TO_PARENT,     // The bundle has been allocated locally, but it has to be executed with your parent
-   OTF_TRACK_DELETING_CELL_TO_PARENT,   // The bundle has been removed locally, but it has to be executed with your parend
+   OTF_TRACK_REMOVING_CELL_TO_PARENT,   // The bundle has been removed locally, but it has to be executed with your parend
    OTF_TRACK_IN_USE,                      // The bundle is used
 
 } otf_track_state_t;
@@ -29,6 +29,7 @@ typedef struct {
    sixtop_trackId_t  trackId;
    uint16_t          rxNumAllocatedCells;
    uint16_t          txNumAllocatedCells;
+   uint16_t          tmpCells;
 } otf_track_t;
 
 typedef struct {
