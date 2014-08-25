@@ -117,7 +117,7 @@ owerror_t r6t_receive(
          // reset packet payload
          msg->payload                  = &(msg->packet[127]);
          msg->length                   = 0;
-         
+#if 0         
          // get preferred parent
          foundNeighbor = neighbors_getPreferredParentEui64(&neighbor);
          if (foundNeighbor==FALSE) {
@@ -130,7 +130,15 @@ owerror_t r6t_receive(
          sixtop_removeCell(
             &neighbor
          );
-         
+#else
+         sixtop_trackId_t trackId;
+         trackId.ownerInstId = 0;
+         trackId.trackOwnerAddr_16b[0] = idmanager_getMyID(ADDR_16B)->addr_16b[0];
+         trackId.trackOwnerAddr_16b[1] = idmanager_getMyID(ADDR_16B)->addr_16b[1];
+         //otf_addCell(&trackId, 1);
+         otf_removeCell(&trackId, 1);
+
+#endif         
          // set the CoAP header
          coap_header->Code             = COAP_CODE_RESP_CHANGED;
          

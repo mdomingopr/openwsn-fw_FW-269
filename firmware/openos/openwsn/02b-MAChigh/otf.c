@@ -62,6 +62,17 @@ void otf_notif_addedCell(sixtop_trackId_t* trackId, uint16_t numCells) {
 }
 
 
+
+
+/**
+ * \brief Called from upper layers to start a process of removing cells
+ *
+ * \param trackId id of the track 
+ * \param numCells Num of cell to add
+ */
+void otf_removeCell(sixtop_trackId_t* trackId, uint16_t numCells) {
+   scheduler_push_task(otf_removeCell_task,TASKPRIO_OTF);
+}
 /**
  * \brief Called by the lower layer (6TOP) when a cell(s) has been removed
  *

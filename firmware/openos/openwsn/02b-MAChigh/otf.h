@@ -48,6 +48,7 @@ void     otf_notif_removedCell(sixtop_trackId_t* trackId, uint16_t numCells);
 
 // COAP
 void     otf_addCell(sixtop_trackId_t* trackId, uint16_t numCells);
+void     otf_removeCell(sixtop_trackId_t* trackId, uint16_t numCells);
 
 /**
 \}
