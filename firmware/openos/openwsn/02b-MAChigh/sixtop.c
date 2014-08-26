@@ -58,7 +58,7 @@ void          sixtop_notifyReceiveCommand(
    trackId_IE_ht*       trackId_ie,
    open_addr_t*         addr
 );
-void          sixtop_notifyReceiveLinkRequest(
+void          sixtop_notifyReceiveAddLinkRequest(
    bandwidth_IE_ht*     bandwidth_ie,
    schedule_IE_ht*      schedule_ie,
    trackId_IE_ht*       trackId_ie,
@@ -71,7 +71,7 @@ void          sixtop_linkResponse(
    schedule_IE_ht*      schedule_ie,
    trackId_IE_ht*       trackId_ie
 );
-void          sixtop_notifyReceiveLinkResponse(
+void          sixtop_notifyReceiveAddLinkResponse(
    bandwidth_IE_ht*     bandwidth_ie,
    schedule_IE_ht*      schedule_ie,
    trackId_IE_ht*       trackId_ie,
@@ -885,6 +885,7 @@ void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
             );
          }
          sixtop_vars.six2six_state = SIX_IDLE;
+         otf_notif_removeCellReqSent(msg->l2_trackIdIE, msg->l2_scheduleIE_numOfCells);
          leds_debug_off();
          break;
       default:
@@ -1024,14 +1025,14 @@ void sixtop_notifyReceiveCommand(
          {
             sixtop_vars.six2six_state = SIX_ADDREQUEST_RECEIVED;
             //received uResCommand is reserve link request
-            sixtop_notifyReceiveLinkRequest(bandwidth_ie,schedule_ie,trackId_ie,addr);
+            sixtop_notifyReceiveAddLinkRequest(bandwidth_ie,schedule_ie,trackId_ie,addr);
          }
          break;
       case SIXTOP_SOFT_CELL_RESPONSE:
          if(sixtop_vars.six2six_state == SIX_WAIT_ADDRESPONSE){
            sixtop_vars.six2six_state = SIX_ADDRESPONSE_RECEIVED;
            //received uResCommand is reserve link response
-           sixtop_notifyReceiveLinkResponse(bandwidth_ie,schedule_ie,trackId_ie,addr);
+           sixtop_notifyReceiveAddLinkResponse(bandwidth_ie,schedule_ie,trackId_ie,addr);
          }
          break;
       case SIXTOP_REMOVE_SOFT_CELL_REQUEST:
@@ -1047,7 +1048,7 @@ void sixtop_notifyReceiveCommand(
       }
 }
 
-void sixtop_notifyReceiveLinkRequest(
+void sixtop_notifyReceiveAddLinkRequest(
    bandwidth_IE_ht* bandwidth_ie, 
    schedule_IE_ht* schedule_ie,
    trackId_IE_ht* trackId_ie,
@@ -1154,7 +1155,7 @@ void sixtop_linkResponse(
    sixtop_vars.six2six_state = SIX_WAIT_ADDRESPONSE_SENDDONE;
 }
 
-void sixtop_notifyReceiveLinkResponse(
+void sixtop_notifyReceiveAddLinkResponse(
    bandwidth_IE_ht* bandwidth_ie, 
    schedule_IE_ht* schedule_ie,
    trackId_IE_ht* trackId_ie,
