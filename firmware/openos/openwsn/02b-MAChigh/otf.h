@@ -25,7 +25,7 @@ typedef enum {
    OTF_TRACK_ADDING_CELL_REMOVING_TRACK,  // Before adding, thre whole track should be removed
    OTF_TRACK_ADDING_CELL_ADDING_TRACK,    // After removing the track, the whole track should be added
    OTF_TRACK_IN_USE,                      // The bundle is used
-
+   OTF_TRACK_ANY_STATE = 0xFF,            // Used for search a track whatever its state is
 } otf_track_state_t;
 
 typedef struct {

@@ -13,7 +13,7 @@ otf_tracks_t   otf_tracks;
 
 void otf_addCell_task(void);
 void otf_removeCell_task(void);
-bool otf_find_track(sixtop_trackId_t* trackId, uint8_t *trackPosition);
+bool otf_find_track(sixtop_trackId_t* trackId, uint8_t* trackPosition, otf_track_state_t state);
 bool otf_find_or_create_track(sixtop_trackId_t* trackId, uint8_t *trackPosition);
 void otf_addCell_internal(bool rxAdded, sixtop_trackId_t* trackId, uint16_t numCells);
 void otf_removeCell_internal(bool rxDeleted, sixtop_trackId_t* trackId, uint16_t numCells);
@@ -90,21 +90,20 @@ void otf_notif_removeCellReqSent(sixtop_trackId_t* trackId, uint16_t numCells) {
    bool found;
    printf("M%02X%02X: ", idmanager_getMyID(ADDR_16B)->addr_16b[0], idmanager_getMyID(ADDR_16B)->addr_16b[1]);
    printf("---_BB\n");   
-   found = otf_find_track(trackId, &trackPosition);
+   found = otf_find_track(trackId, &trackPosition, OTF_TRACK_ADDING_CELL_REMOVING_TRACK);
    printf("found %d\n", found);
    if (TRUE == found) {
-      if (OTF_TRACK_ADDING_CELL_REMOVING_TRACK == otf_tracks.info[trackPosition].state) {
-         printf("M%02X%02X: ", idmanager_getMyID(ADDR_16B)->addr_16b[0], idmanager_getMyID(ADDR_16B)->addr_16b[1]);
-         printf("---BB\n");   
+      printf("M%02X%02X: ", idmanager_getMyID(ADDR_16B)->addr_16b[0], idmanager_getMyID(ADDR_16B)->addr_16b[1]);
+      printf("---BB\n");   
 
-         otf_tracks.info[trackPosition].tmpCells += otf_tracks.info[trackPosition].txNumAllocatedCells;
-         otf_tracks.info[trackPosition].txNumAllocatedCells = 0;
-         otf_tracks.info[trackPosition].state = OTF_TRACK_ADDING_CELL_ADDING_TRACK;
-         scheduler_push_task(otf_addCell_task,TASKPRIO_OTF);
-      } else {
-         printf("M%02X%02X: ", idmanager_getMyID(ADDR_16B)->addr_16b[0], idmanager_getMyID(ADDR_16B)->addr_16b[1]);
-         printf("---Failed with state: %d\n", otf_tracks.info[trackPosition].state);   
-      }
+      otf_tracks.info[trackPosition].tmpCells += otf_tracks.info[trackPosition].txNumAllocatedCells;
+      otf_tracks.info[trackPosition].txNumAllocatedCells = 0;
+      otf_tracks.info[trackPosition].state = OTF_TRACK_ADDING_CELL_ADDING_TRACK;
+      scheduler_push_task(otf_addCell_task,TASKPRIO_OTF);
+   }
+   else {
+      printf("M%02X%02X: ", idmanager_getMyID(ADDR_16B)->addr_16b[0], idmanager_getMyID(ADDR_16B)->addr_16b[1]);
+      printf("---ERROR!!! TrackId not Found.\n");   
    }
 
 }
@@ -294,36 +293,26 @@ void otf_removeCell_internal(bool rxDeleted, sixtop_trackId_t* trackId, uint16_t
    printf("M%02X%02X: ", idmanager_getMyID(ADDR_16B)->addr_16b[0], idmanager_getMyID(ADDR_16B)->addr_16b[1]);
    printf("RemoveCellInternal\n");
 
-   if (TRUE == otf_find_track(trackId, &trackPosition)) {
+   if (TRUE == otf_find_track(trackId, &trackPosition, OTF_TRACK_IN_USE)) {
       printf("M%02X%02X: ", idmanager_getMyID(ADDR_16B)->addr_16b[0], idmanager_getMyID(ADDR_16B)->addr_16b[1]);
       printf("TrackFound\n");
 
       if (TRUE == rxDeleted) {
          otf_tracks.info[trackPosition].rxNumAllocatedCells -= numCells; /* \TODO mdomingo: check */
       }
-      switch (otf_tracks.info[trackPosition].state) {
-         case OTF_TRACK_IN_USE:
-               printf("M%02X%02X: ", idmanager_getMyID(ADDR_16B)->addr_16b[0], idmanager_getMyID(ADDR_16B)->addr_16b[1]);
-               printf("--1. Numcells: %d, RxCells:%d, TxCells:%d\n", numCells, otf_tracks.info[trackPosition].rxNumAllocatedCells, otf_tracks.info[trackPosition].txNumAllocatedCells);
+      printf("M%02X%02X: ", idmanager_getMyID(ADDR_16B)->addr_16b[0], idmanager_getMyID(ADDR_16B)->addr_16b[1]);
+      printf("--1. Numcells: %d, RxCells:%d, TxCells:%d\n", numCells, otf_tracks.info[trackPosition].rxNumAllocatedCells, otf_tracks.info[trackPosition].txNumAllocatedCells);
 
-               otf_tracks.info[trackPosition].tmpCells = numCells;
-               otf_tracks.info[trackPosition].state = OTF_TRACK_REMOVING_CELL_TO_PARENT;
-               scheduler_push_task(otf_removeCell_task,TASKPRIO_OTF);
-               
-               printf("--2. Numcells: %d, RxCells:%d, TxCells:%d\n", numCells, otf_tracks.info[trackPosition].rxNumAllocatedCells, otf_tracks.info[trackPosition].txNumAllocatedCells);
-            break;
-         default:
-            /* \TODO mdomingo: log error. */
-                  printf("M%02X%02X: ", idmanager_getMyID(ADDR_16B)->addr_16b[0], idmanager_getMyID(ADDR_16B)->addr_16b[1]);
-                  printf("--ERROR in REMOVECELL_INTERNAL1. \n");
-            break;
-      }
+      otf_tracks.info[trackPosition].tmpCells = numCells;
+      otf_tracks.info[trackPosition].state = OTF_TRACK_REMOVING_CELL_TO_PARENT;
+      scheduler_push_task(otf_removeCell_task,TASKPRIO_OTF);
 
+      printf("--2. Numcells: %d, RxCells:%d, TxCells:%d\n", numCells, otf_tracks.info[trackPosition].rxNumAllocatedCells, otf_tracks.info[trackPosition].txNumAllocatedCells);
    }
    else {   /* The track is not in the list. */
       /* \TODO mdomingo: log error.*/
       printf("M%02X%02X: ", idmanager_getMyID(ADDR_16B)->addr_16b[0], idmanager_getMyID(ADDR_16B)->addr_16b[1]);
-      printf("--No track to delete with that id!\n");
+      printf("--ERROR!!! No track to delete with that id, or invalid state\n");
    }
 }
 
@@ -340,7 +329,8 @@ void otf_addCell_internal(bool rxAdded, sixtop_trackId_t* trackId, uint16_t numC
    printf("--OTF_ADDCELL_INTERNAL. Id: %d, NumCells: %d\n", trackId->ownerInstId, numCells);
 
 #ifdef OTF_REM_ADD_STRATEGY
-   if (FALSE == rxAdded && TRUE == otf_find_track(trackId, &trackPosition)) {
+   /* If the track already exist, delete it first */
+   if (FALSE == rxAdded && TRUE == otf_find_track(trackId, &trackPosition, OTF_TRACK_IN_USE)) {
       otf_tracks.info[trackPosition].tmpCells = numCells;
       otf_tracks.info[trackPosition].state = OTF_TRACK_ADDING_CELL_REMOVING_TRACK;
       printf("M%02X%02X: ", idmanager_getMyID(ADDR_16B)->addr_16b[0], idmanager_getMyID(ADDR_16B)->addr_16b[1]);
@@ -354,23 +344,14 @@ void otf_addCell_internal(bool rxAdded, sixtop_trackId_t* trackId, uint16_t numC
       if (TRUE == rxAdded) {
          otf_tracks.info[trackPosition].rxNumAllocatedCells = numCells;
       }
-      switch (otf_tracks.info[trackPosition].state) {
-         case OTF_TRACK_IN_USE:
-               printf("M%02X%02X: ", idmanager_getMyID(ADDR_16B)->addr_16b[0], idmanager_getMyID(ADDR_16B)->addr_16b[1]);
-               printf("--1. Numcells: %d, RxCells:%d, TxCells:%d\n", numCells, otf_tracks.info[trackPosition].rxNumAllocatedCells, otf_tracks.info[trackPosition].txNumAllocatedCells);
+      printf("M%02X%02X: ", idmanager_getMyID(ADDR_16B)->addr_16b[0], idmanager_getMyID(ADDR_16B)->addr_16b[1]);
+      printf("--1. Numcells: %d, RxCells:%d, TxCells:%d\n", numCells, otf_tracks.info[trackPosition].rxNumAllocatedCells, otf_tracks.info[trackPosition].txNumAllocatedCells);
 
-               otf_tracks.info[trackPosition].tmpCells = numCells;
-               otf_tracks.info[trackPosition].state = OTF_TRACK_ADDING_CELL_TO_PARENT;
-               scheduler_push_task(otf_addCell_task,TASKPRIO_OTF);
-               
-               printf("--2. Numcells: %d, RxCells:%d, TxCells:%d\n", numCells, otf_tracks.info[trackPosition].rxNumAllocatedCells, otf_tracks.info[trackPosition].txNumAllocatedCells);
-            break;
-         default:
-            /* \TODO mdomingo: log error. */
-                  printf("M%02X%02X: ", idmanager_getMyID(ADDR_16B)->addr_16b[0], idmanager_getMyID(ADDR_16B)->addr_16b[1]);
-                  printf("--ERROR in ADDCELL_INTERNAL1. \n");
-            break;
-      }
+      otf_tracks.info[trackPosition].tmpCells = numCells;
+      otf_tracks.info[trackPosition].state = OTF_TRACK_ADDING_CELL_TO_PARENT;
+      scheduler_push_task(otf_addCell_task,TASKPRIO_OTF);
+
+      printf("--2. Numcells: %d, RxCells:%d, TxCells:%d\n", numCells, otf_tracks.info[trackPosition].rxNumAllocatedCells, otf_tracks.info[trackPosition].txNumAllocatedCells);
 
    }
    else {   /* All memory alocated for storing tracks is used. */
@@ -386,22 +367,30 @@ void otf_addCell_internal(bool rxAdded, sixtop_trackId_t* trackId, uint16_t numC
  *
  * \param trackId id of the track 
  * \param trackPosition Returns the position of the track inside the vector.
+ * \param state State to search the track. If OTF_TRACK_ANY_STATE, this parameter is not used.
  *
  * \return TRUE if it was found. FALSE otherwise.
  */
-bool otf_find_track(sixtop_trackId_t* trackId, uint8_t* trackPosition) {
+bool otf_find_track(sixtop_trackId_t* trackId, uint8_t* trackPosition, otf_track_state_t state) {
    uint8_t i;
    bool trackFound = FALSE;
+   bool ret = FALSE;
    for (i=0; i<OTF_MAX_NUMBER_OF_TRACKS && FALSE == trackFound; i++){    /* Search the track */
       printf("%d\n", i);
-      if (sixtop_is_same_trackId(&otf_tracks.info[i].trackId, trackId) && OTF_TRACK_NOT_USED != otf_tracks.info[i].state) {
-         printf("found\n");
+      if (sixtop_is_same_trackId(&otf_tracks.info[i].trackId, trackId)) {
          trackFound = TRUE;
-         *trackPosition = i;
-         printf("found2\n");
+         if (OTF_TRACK_ANY_STATE != state) {
+            if (state == otf_tracks.info[i].state) {
+               ret = TRUE;
+               *trackPosition = i;
+            }
+         }
+         else {
+            ret = TRUE;
+         }
       }
    }
-   return trackFound; 
+   return ret; 
 }
 
 /**
@@ -415,16 +404,23 @@ bool otf_find_track(sixtop_trackId_t* trackId, uint8_t* trackPosition) {
 bool otf_find_or_create_track(sixtop_trackId_t* trackId, uint8_t* trackPosition) {
    uint8_t i;
    bool trackFound = FALSE;
+   bool ret = FALSE;
    printTracks(); 
-   trackFound = otf_find_track(trackId, trackPosition);
+   trackFound = otf_find_track(trackId, trackPosition, OTF_TRACK_ANY_STATE);
    //debugPrint_id();
    printf("M%02X%02X: ", idmanager_getMyID(ADDR_16B)->addr_16b[0], idmanager_getMyID(ADDR_16B)->addr_16b[1]);
    printf("FINDORCREATETRACK: FIND: trackFound %d at %d\n", trackFound, *trackPosition);
    
-   if (FALSE == trackFound) {     /* If not found, search a not used track */
+   if (TRUE == trackFound) {
+      if (OTF_TRACK_IN_USE == otf_tracks.info[*trackPosition].state) {
+         ret = TRUE;
+      }
+   }
+   else {/* If not found, search search a not used track */
       for (i=0; i<OTF_MAX_NUMBER_OF_TRACKS && FALSE == trackFound; i++) {
          if (OTF_TRACK_NOT_USED == otf_tracks.info[i].state) {
             trackFound = TRUE;
+            ret = TRUE;
             *trackPosition = i;
             otf_tracks.info[i].state = OTF_TRACK_IN_USE;
             otf_tracks.info[i].trackId.ownerInstId = trackId->ownerInstId;
@@ -437,7 +433,7 @@ bool otf_find_or_create_track(sixtop_trackId_t* trackId, uint8_t* trackPosition)
    }
    printf("M%02X%02X: ", idmanager_getMyID(ADDR_16B)->addr_16b[0], idmanager_getMyID(ADDR_16B)->addr_16b[1]);
    printf("FINDORCREATETRACK: trackFound %d at %d\n", trackFound, *trackPosition);
-   return trackFound;
+   return ret;
 }
 
 
