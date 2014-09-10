@@ -849,6 +849,37 @@ port_INLINE void activity_ti1ORri1() {
          if (schedule_getOkToSend()) {
             schedule_getNeighbor(&neighbor);
             ieee154e_vars.dataToSend = openqueue_macGetDataPacket(&neighbor);
+            //printf("**** ASN: %02X %04X %04X", ieee154e_vars.asn.byte4, ieee154e_vars.asn.bytes2and3, ieee154e_vars.asn.bytes0and1);
+            if(NULL != ieee154e_vars.dataToSend) {
+               if(ieee154e_vars.dataToSend->l2_nextORpreviousHop.type == ADDR_64B) {
+                  if(0xFF != ieee154e_vars.dataToSend->l2_nextORpreviousHop.addr_64b[0]){
+#if 1
+//                     printf("**** ASN: %04X, 64B addr: %016X\n", ieee154e_vars.asn.bytes0and1, ieee154e_vars.dataToSend->l2_nextORpreviousHop.addr_64b[0]);
+#else
+                     {
+                     int kk;
+                     printf("**** ASN: %04X, ", ieee154e_vars.asn.bytes0and1);
+                     printf("64B addr: ");
+                     for(kk=0;kk<8;kk++) {
+                        printf("%02X ", ieee154e_vars.dataToSend->l2_nextORpreviousHop.addr_64b[kk]);
+                     }
+                     printf("\n");
+                     }
+#endif
+                     /* \TODO mdomingo: updated otf statistics */
+                     otf_notif_updateStatistics(&ieee154e_vars.asn, 
+                                                &(ieee154e_vars.dataToSend->l2_nextORpreviousHop), 
+                                                openqueue_macCountDataPacket(&(ieee154e_vars.dataToSend->l2_nextORpreviousHop))-1);
+                  }
+               }
+               else if(ieee154e_vars.dataToSend->l2_nextORpreviousHop.type  == ADDR_ANYCAST) {
+                  printf("**** ASN: %04X, ANYCAST addr: \n", ieee154e_vars.asn.bytes0and1);
+               }
+               else {
+                  printf("**** ASN: %04X, unknown addr type: %d\n", ieee154e_vars.asn.bytes0and1, neighbor.type);
+               }
+            }
+            
          } else {
             ieee154e_vars.dataToSend = NULL;
          }

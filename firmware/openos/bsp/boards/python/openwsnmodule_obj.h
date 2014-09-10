@@ -19,6 +19,7 @@
 #include "neighbors_obj.h"
 #include "processIE_obj.h"
 #include "sixtop_obj.h"
+#include "otf_obj.h"
 #include "schedule_obj.h"
 #include "icmpv6echo_obj.h"
 #include "icmpv6rpl_obj.h"
@@ -193,6 +194,7 @@ struct OpenMote {
    sixtop_vars_t        sixtop_vars;
    neighbors_vars_t     neighbors_vars;
    schedule_vars_t      schedule_vars;
+   otf_vars_t           otf_vars;
    // l2a
    adaptive_sync_vars_t adaptive_sync_vars;
    ieee154e_vars_t      ieee154e_vars;

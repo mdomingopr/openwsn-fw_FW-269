@@ -60,6 +60,20 @@ void udpstorm_init(void) {
    
    opentimers_stop(udpstorm_vars.timerId);
    */
+
+#if 1
+{
+   open_addr_t* myAddr;
+   myAddr = idmanager_getMyID(ADDR_16B);
+   if (0x04 == myAddr->addr_16b[1]){
+      udpstorm_vars.timerId = opentimers_start(1000,
+            TIMER_PERIODIC,
+            TIME_MS,
+            udpstorm_timer_cb);
+   }
+}
+#endif
+
 }
 
 //=========================== private =========================================
@@ -114,6 +128,10 @@ owerror_t udpstorm_receive(
             opentimers_restart(udpstorm_vars.timerId);
          }
          */
+#if 0
+         udpstorm_vars.perid = 10000;
+#endif
+
          
          // reset packet payload
          msg->payload             = &(msg->packet[127]);
@@ -138,6 +156,7 @@ owerror_t udpstorm_receive(
    task to scheduler with CoAP priority, and let scheduler take care of it.
 */
 void udpstorm_timer_cb(){
+   //printf("******UDPSTORM timer fired!!!!!\n");
    scheduler_push_task(udpstorm_task_cb,TASKPRIO_COAP);
 }
 
@@ -154,15 +173,29 @@ void udpstorm_task_cb() {
       opentimers_stop(udpstorm_vars.timerId);
       return;
    }
-   
+
+#if 1 /* \TODO mdomingo: remove */
+{
+   open_addr_t* myAddr;
+   myAddr = idmanager_getMyID(ADDR_16B);
+   //printf("****-- %02X %02X\n", myAddr->addr_16b[0], myAddr->addr_16b[1]);
+   if (0x04 != myAddr->addr_16b[1]){
+      opentimers_stop(udpstorm_vars.timerId);
+      return;
+   }
+}
+#endif
+
+#if 0 // \TODO mdomingo: discomment  
    if(udpstorm_vars.period == 0) {
       // stop the periodic timer
       opentimers_stop(udpstorm_vars.timerId);
       return;
    }
-   
+#endif   
+
    // if you get here, send a packet
-   
+printf("*****Sending Packet UPDSTORM!!!!!!\n");   
    // get a packet
    pkt = openqueue_getFreePacketBuffer(COMPONENT_UDPSTORM);
    if (pkt==NULL) {

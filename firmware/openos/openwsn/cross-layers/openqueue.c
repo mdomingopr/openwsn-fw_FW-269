@@ -221,6 +221,26 @@ OpenQueueEntry_t* openqueue_macGetDataPacket(open_addr_t* toNeighbor) {
    return NULL;
 }
 
+uint8_t openqueue_macCountDataPacket(open_addr_t* toNeighbor) {
+   uint8_t i;
+   uint8_t ret = 0;
+   INTERRUPT_DECLARATION();
+   DISABLE_INTERRUPTS();
+   if (toNeighbor->type==ADDR_64B) {
+      // a neighbor is specified, look for a packet unicast to that neigbhbor
+      for (i=0;i<QUEUELENGTH;i++) {
+         if (openqueue_vars.queue[i].owner==COMPONENT_SIXTOP_TO_IEEE802154E &&
+            packetfunctions_sameAddress(toNeighbor,&openqueue_vars.queue[i].l2_nextORpreviousHop)) {
+            ret++;
+         }
+      }
+   } else if (toNeighbor->type==ADDR_ANYCAST) {
+      ret = 0;
+   }
+   ENABLE_INTERRUPTS();
+   return ret;
+}
+
 OpenQueueEntry_t* openqueue_macGetAdvPacket() {
    uint8_t i;
    INTERRUPT_DECLARATION();
