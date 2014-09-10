@@ -3,6 +3,7 @@
 #include "neighbors.h"
 #include "sixtop.h"
 #include "scheduler.h"
+//mdomingo: test
 
 //=========================== variables =======================================
 otf_vars_t otf_vars;
