@@ -11,7 +11,7 @@
 #include "openwsn.h"
 
 //=========================== define ==========================================
-#define OTF_TIMER_PERIOD_MS               10000 //10s
+#define OTF_TIMER_PERIOD_MS               150000// 70000 //10s
 #define OTF_MAX_NUM_NEIGHBOR_STATISTICS   10
 
 #define PID_NUM_INTEGRAL_HISTORY    10

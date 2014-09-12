@@ -149,6 +149,25 @@ void sixtop_setKaPeriod(uint16_t kaPeriod) {
 
 //======= scheduling
 
+/**
+ * @brief Tries to add numCells cells with the neighbor.
+ *        The process is the following:
+ *          1. Search for a candidate cell list that you have available
+ *          2. Set the state SIX_SENDING_ADDREQUEST
+ *          3. Create a paket with:
+ *              - Creator and owner COMPONENT_SIXTOP_RES
+ *              - Neighbor (your prefered parent)
+ *              - SheduleIE (frameID, flag, cellList)
+ *              - BandwidthIE (numCells, frameID)
+ *              - OpcodeIE (SIXTOP_SOFT_CELL_REQ)
+ *          4. Send packet to your neighbor (best parent)
+ *          5. Set the state SIX_WAIT_ADDREQUEST_SENDDONE
+ *          6. If a timeOut occurs, the state is set to SIX_IDLE again.
+ *          - Number of active cells
+ *
+ * @param neighbor Neighbor where to send the request (best parent)
+ * @param numCells Number of cell to request the neighbor
+ */
 void sixtop_addCells(open_addr_t* neighbor, uint16_t numCells){
    OpenQueueEntry_t* pkt;
    uint8_t           len;
@@ -314,6 +333,13 @@ void sixtop_removeCell(open_addr_t* neighbor){
 
 //======= from upper layer
 
+/**
+ * @brief Sends a packet
+ *
+ * @param msg
+ *
+ * @return 
+ */
 owerror_t sixtop_send(OpenQueueEntry_t *msg) {
    
    // set metadata
@@ -337,9 +363,17 @@ owerror_t sixtop_send(OpenQueueEntry_t *msg) {
 
 //======= from lower layer
 
+/**
+ * @brief Task called by lower layer (IEEE802154E) when a packet has been succesfully sent. It updates local states.
+ */
 void task_sixtopNotifSendDone() {
    OpenQueueEntry_t* msg;
    
+{   
+uint8_t asn[5];
+ieee154e_getAsn(asn);
+printf("%02X %04X ****---IEEESIXTOP_NOTIFYSENDDONE\n", idmanager_getMyID(ADDR_16B)->addr_16b[1], asn[0]);   
+}   
    // get recently-sent packet from openqueue
    msg = openqueue_sixtopGetSentPacket();
    if (msg==NULL) {
@@ -410,6 +444,9 @@ void task_sixtopNotifSendDone() {
    }
 }
 
+/**
+ * @brief Called by lower layer when a packet is received
+ */
 void task_sixtopNotifReceive() {
    OpenQueueEntry_t* msg;
    uint16_t          lenIE;
@@ -761,6 +798,14 @@ void timer_sixtop_six2six_timeout_fired(void) {
    sixtop_vars.six2six_state = SIX_IDLE;
 }
 
+/**
+ * @brief Called when a 6TOP message has been sent.
+ *          Change the state.
+ *          Function called by task_sixtopNotifSendDone
+ *
+ * @param msg
+ * @param error
+ */
 void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
    uint8_t i,numOfCells;
    uint8_t* ptr;
@@ -822,6 +867,15 @@ void sixtop_six2six_sendDone(OpenQueueEntry_t* msg, owerror_t error){
    openqueue_freePacketBuffer(msg);
 }
 
+/**
+ * @brief It process a IE message. Extract information and notify that a command has been received.
+ *          Called when a packet is received.
+ *
+ * @param pkt
+ * @param lenIE
+ *
+ * @return 
+ */
 port_INLINE bool sixtop_processIEs(OpenQueueEntry_t* pkt, uint16_t * lenIE) {
    uint8_t ptr;
    uint8_t temp_8b,gr_elem_id,subid;
@@ -934,6 +988,14 @@ port_INLINE bool sixtop_processIEs(OpenQueueEntry_t* pkt, uint16_t * lenIE) {
   return TRUE;
 }
 
+/**
+ * @brief A command has been received. Execute it.
+ *
+ * @param opcode_ie
+ * @param bandwidth_ie
+ * @param schedule_ie
+ * @param addr
+ */
 void sixtop_notifyReceiveCommand(
    opcode_IE_ht* opcode_ie, 
    bandwidth_IE_ht* bandwidth_ie, 
@@ -1004,6 +1066,14 @@ void sixtop_notifyReceiveLinkRequest(
                        schedule_ie);
 }
 
+/**
+ * @brief Send a response to your son. It is a response to the SIXTOP_SOFT_CELL_REQ. You could say wether you could set the cells or not.
+ *
+ * @param scheduleCellSuccess
+ * @param tempNeighbor
+ * @param bandwidth
+ * @param schedule_ie
+ */
 void sixtop_linkResponse(
    bool scheduleCellSuccess, 
    open_addr_t* tempNeighbor,
@@ -1068,6 +1138,14 @@ void sixtop_linkResponse(
    sixtop_vars.six2six_state = SIX_WAIT_ADDRESPONSE_SENDDONE;
 }
 
+/**
+ * @brief Called when a SIXTOP_SOFT_CELL_RESPONSE cmd was received.
+ *          Extracts the information and if cells are available, set them.
+ *
+ * @param bandwidth_ie
+ * @param schedule_ie
+ * @param addr
+ */
 void sixtop_notifyReceiveLinkResponse(
    bandwidth_IE_ht* bandwidth_ie, 
    schedule_IE_ht* schedule_ie,
@@ -1132,6 +1210,16 @@ void sixtop_notifyReceiveRemoveLinkRequest(
 
 //======= helper functions
 
+/**
+ * @brief Creates a list of available local cells
+ *
+ * @param type 1 ¿?
+ * @param frameID SCHEDULE_MINIMAL_6TISCH_DEFAULT_SLOTFRAME_HANDLE
+ * @param flag 1 ¿?
+ * @param cellList List of cells 
+ *
+ * @return return a list with some (or all) available local cells
+ */
 bool sixtop_candidateAddCellList(
       uint8_t*     type,
       uint8_t*     frameID,
@@ -1199,6 +1287,15 @@ bool sixtop_candidateRemoveCellList(
    }
 }
 
+/**
+ * @brief Add the following cells as used to your local cells map.
+ *
+ * @param slotframeID
+ * @param numOfLinks
+ * @param cellList
+ * @param previousHop
+ * @param 
+ */
 void sixtop_addCellsByState(
       uint8_t      slotframeID,
       uint8_t      numOfLinks,
@@ -1214,6 +1311,7 @@ void sixtop_addCellsByState(
    
    j=0;
    for(i = 0;i<SCHEDULEIEMAXNUMCELLS;i++){
+/* MDP: this part looks strange. I think shouldn't be related to tx. It should be related if that cell your parent set to be scheduled, or not. */
       //only schedule when the request side wants to schedule a tx cell
       if(cellList[i].linkoptions == CELLTYPE_TX){
          switch(state) {

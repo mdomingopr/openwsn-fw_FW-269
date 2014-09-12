@@ -20,6 +20,7 @@
 #include "schedule.h"
 #include "sixtop.h"
 #include "neighbors.h"
+#include "otf.h"
 //-- 03a-IPHC
 #include "openbridge.h"
 #include "iphc.h"
@@ -96,6 +97,7 @@ void openwsn_init() {
    schedule_init();
    sixtop_init();
    neighbors_init();
+   otf_init();
    //-- 03a-IPHC
    openbridge_init();
    iphc_init();

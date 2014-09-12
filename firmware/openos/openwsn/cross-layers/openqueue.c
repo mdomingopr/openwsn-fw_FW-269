@@ -11,6 +11,8 @@ openqueue_vars_t openqueue_vars;
 //=========================== prototypes ======================================
 
 void openqueue_reset_entry(OpenQueueEntry_t* entry);
+void openqueue_copy_entry(OpenQueueEntry_t* from , OpenQueueEntry_t* to);
+inline static void openqueue_sortQueueFrom(uint8_t index);
 
 //=========================== public ==========================================
 
@@ -60,7 +62,7 @@ get a new packet buffer to start creating a new packet.
          it could not be allocated (buffer full or not synchronized).
 */
 OpenQueueEntry_t* openqueue_getFreePacketBuffer(uint8_t creator) {
-   uint8_t i;
+   uint8_t i, j;
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();
    
@@ -107,6 +109,7 @@ owerror_t openqueue_freePacketBuffer(OpenQueueEntry_t* pkt) {
                                   (errorparameter_t)0);
          }
          openqueue_reset_entry(&(openqueue_vars.queue[i]));
+         openqueue_sortQueueFrom(i);
          ENABLE_INTERRUPTS();
          return E_SUCCESS;
       }
@@ -131,6 +134,7 @@ void openqueue_removeAllCreatedBy(uint8_t creator) {
    for (i=0;i<QUEUELENGTH;i++){
       if (openqueue_vars.queue[i].creator==creator) {
          openqueue_reset_entry(&(openqueue_vars.queue[i]));
+         openqueue_sortQueueFrom(i);
       }
    }
    ENABLE_INTERRUPTS();
@@ -148,6 +152,7 @@ void openqueue_removeAllOwnedBy(uint8_t owner) {
    for (i=0;i<QUEUELENGTH;i++){
       if (openqueue_vars.queue[i].owner==owner) {
          openqueue_reset_entry(&(openqueue_vars.queue[i]));
+         openqueue_sortQueueFrom(i);
       }
    }
    ENABLE_INTERRUPTS();
@@ -275,4 +280,20 @@ void openqueue_reset_entry(OpenQueueEntry_t* entry) {
    entry->l2_frameType                 = IEEE154_TYPE_UNDEFINED;
    entry->l2_retriesLeft               = 0;
    entry->l2_IEListPresent             = 0;
+}
+
+void openqueue_copy_entry(OpenQueueEntry_t* from , OpenQueueEntry_t* to) {
+   memcpy(to, from, sizeof(OpenQueueEntry_t));
+}
+
+inline static void openqueue_sortQueueFrom(uint8_t index) {
+#if 0 // mdomingo when enabled the application crashes. Don't know why. Ideas: Someone uses a packet when it has been already freed?? too much time blocking interrupts??
+   uint8_t i;
+   for (i=index;i<(QUEUELENGTH-1);i++) {
+      if (COMPONENT_NULL == openqueue_vars.queue[i].owner) {
+         openqueue_copy_entry(&(openqueue_vars.queue[i+1]), &(openqueue_vars.queue[i]));
+         openqueue_reset_entry(&(openqueue_vars.queue[i+1]));
+      }
+   }
+#endif
 }

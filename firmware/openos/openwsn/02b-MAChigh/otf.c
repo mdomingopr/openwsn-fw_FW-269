@@ -33,11 +33,23 @@ void otf_init(void) {
 
       pid_zeroize(&(otf_vars.neighbor[i].pid)); 
    }
-
+#if 0
    otf_vars.timerId = opentimers_start(OTF_TIMER_PERIOD_MS,
                                        TIMER_PERIODIC,
                                        TIME_MS,
                                        otf_timer_cb);
+#else
+{
+   open_addr_t* myAddr;
+   myAddr = idmanager_getMyID(ADDR_16B);
+   if (0x02 == myAddr->addr_16b[1]){
+      otf_vars.timerId = opentimers_start(OTF_TIMER_PERIOD_MS,
+                                          TIMER_PERIODIC,
+                                          TIME_MS,
+                                          otf_timer_cb);
+   }
+}
+#endif
 }
 
 void otf_notif_addedCell(void) {
@@ -57,7 +69,10 @@ void     otf_notif_updateStatistics(asn_t* currentAsn, open_addr_t* address, uin
    int kk;
    bool found = FALSE;
    uint8_t position;
-   
+
+#if 1   
+   //otf_printLocalVar();
+#endif
 
 #if 1
    printf("%02X ", idmanager_getMyID(ADDR_16B)->addr_16b[1]);
@@ -80,6 +95,7 @@ void     otf_notif_updateStatistics(asn_t* currentAsn, open_addr_t* address, uin
       if (TRUE == otf_vars.neighbor[i].used && packetfunctions_sameAddress(&otf_vars.neighbor[i].address, address)) {
          position  = i;
          found = TRUE;
+//         printf("XXXX-Found %d\n", position);
       }
    }
 
@@ -91,14 +107,15 @@ void     otf_notif_updateStatistics(asn_t* currentAsn, open_addr_t* address, uin
             memcpy(&otf_vars.neighbor[i].address, address, sizeof(open_addr_t));
             position = i;
             found = TRUE;
+//            printf("XXXX-Created %d\n", position);
          }
       }
    }
 
    //Add statistics
    if (TRUE == found) {
-      pid_update(&(otf_vars.neighbor[i].pid), numMesgsQueue, ieee154e_asnDiff(&otf_vars.neighbor[i].lastAsn));
-      memcpy(&otf_vars.neighbor[i].lastAsn, currentAsn, sizeof(asn_t));
+      pid_update(&(otf_vars.neighbor[position].pid), numMesgsQueue, ieee154e_asnDiff(&otf_vars.neighbor[position].lastAsn));
+      memcpy(&otf_vars.neighbor[position].lastAsn, currentAsn, sizeof(asn_t));
    }
    else {
       printf("*****OTF ERROR: could find or create a new neighbor statistics!!!!\n");
@@ -118,15 +135,48 @@ void otf_removeCell(void) {
  * \brief Function called by the otf timer
  */
 void otf_timer_cb() {
+//   printf("_____________TIMER fires\n");
    scheduler_push_task(otf_timer_fired_task,TASKPRIO_OTF);
 }
+
+#if 1
+void otf_printLocalVar() {
+   uint8_t i;
+   for(i=0;i<OTF_MAX_NUM_NEIGHBOR_STATISTICS;i++) {
+      printf("%02X ", idmanager_getMyID(ADDR_16B)->addr_16b[1]);
+      printf("%d ", otf_vars.neighbor[i].used);
+      printf("%02X ", otf_vars.neighbor[i].address.addr_64b[7]);
+      printf("%f ", otf_vars.neighbor[i].pid.prev_error);
+      printf("%d ", otf_vars.neighbor[i].pid.lastHistoryPosition);
+      printf("%f ", otf_vars.neighbor[i].pid.control);
+      printf("\n");
+   }
+}
+#endif
 
 
 /**
  * \brief Task that calculates the bandwidth requirements and increases/decreases radio cells
  */
 void otf_timer_fired_task(void) {
-
+   uint8_t i;
+   printf("_____________TIMER task reached\n");
+   //Checking if more slots have to be added
+   for (i=0; i<OTF_MAX_NUM_NEIGHBOR_STATISTICS; i++) {
+      if (TRUE == otf_vars.neighbor[i].used) {
+         printf("%02X found neighbor %02X %f\n", idmanager_getMyID(ADDR_16B)->addr_16b[1],  otf_vars.neighbor[i].address.addr_64b[7], otf_vars.neighbor[i].pid.control);
+         //printPID(&otf_vars.neighbor[i].pid);
+         //otf_printLocalVar();
+         if (0.4 < otf_vars.neighbor[i].pid.control) {
+            printf("<<<<<<<>>>>><<<<>>>>OTFPID: ADDING A CELL to %02X!!!!!<<<<<>>>>>><<<>>\n", otf_vars.neighbor[i].address.addr_64b[7]);
+            // call sixtop
+            sixtop_addCells(
+                  &otf_vars.neighbor[i].address,
+                  1
+                  );
+         }
+      }
+   }
 
 }
 

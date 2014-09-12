@@ -65,8 +65,8 @@ void udpstorm_init(void) {
 {
    open_addr_t* myAddr;
    myAddr = idmanager_getMyID(ADDR_16B);
-   if (0x04 == myAddr->addr_16b[1]){
-      udpstorm_vars.timerId = opentimers_start(1000,
+   if (0x02 == myAddr->addr_16b[1]){
+      udpstorm_vars.timerId = opentimers_start(20000,
             TIMER_PERIODIC,
             TIME_MS,
             udpstorm_timer_cb);
@@ -179,10 +179,12 @@ void udpstorm_task_cb() {
    open_addr_t* myAddr;
    myAddr = idmanager_getMyID(ADDR_16B);
    //printf("****-- %02X %02X\n", myAddr->addr_16b[0], myAddr->addr_16b[1]);
+#if 0
    if (0x04 != myAddr->addr_16b[1]){
       opentimers_stop(udpstorm_vars.timerId);
       return;
    }
+#endif
 }
 #endif
 
