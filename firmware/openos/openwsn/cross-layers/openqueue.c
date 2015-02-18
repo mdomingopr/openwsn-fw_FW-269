@@ -226,6 +226,13 @@ OpenQueueEntry_t* openqueue_macGetDataPacket(open_addr_t* toNeighbor) {
    return NULL;
 }
 
+/**
+\brief counts the number of packets that we have inthe queue pending to be sent to a specific neighbor
+
+\param toNeighbor Address of the neighbor to count messages
+
+\returns number of messages pending to sent to a specific neighbor
+*/
 uint8_t openqueue_macCountDataPacket(open_addr_t* toNeighbor) {
    uint8_t i;
    uint8_t ret = 0;

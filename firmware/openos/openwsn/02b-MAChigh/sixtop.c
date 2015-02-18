@@ -796,6 +796,7 @@ port_INLINE void sixtop_sendKA() {
 void timer_sixtop_six2six_timeout_fired(void) {
    // timeout timer fired, reset the state of sixtop to idle
    sixtop_vars.six2six_state = SIX_IDLE;
+   printf("%02X MDP- ERROR adding tx CELL!!!! Timeot reached!\n", idmanager_getMyID(ADDR_16B)->addr_16b[1]);
 }
 
 /**
@@ -1051,12 +1052,14 @@ void sixtop_notifyReceiveLinkRequest(
                                             schedule_ie->cellList, 
                                             bw) == FALSE){
       scheduleCellSuccess = FALSE;
+      printf("%02X MDP- ERROR adding rx CELL. They are not available\n", idmanager_getMyID(ADDR_16B)->addr_16b[1]);
    } else {
       sixtop_addCellsByState(
          frameID,
          bw,
          schedule_ie->cellList,addr,sixtop_vars.six2six_state);
       scheduleCellSuccess = TRUE;
+      printf("%02X MDP- Added rx CELL!!!!! We were lucky!!!\n", idmanager_getMyID(ADDR_16B)->addr_16b[1]);
    }
   
    //call link response command
@@ -1160,6 +1163,7 @@ void sixtop_notifyReceiveLinkResponse(
    if(bw == 0){
       // link request failed
       // todo- should inform some one
+      printf("%02X MDP- ERROR adding tx CELL. BW=0\n", idmanager_getMyID(ADDR_16B)->addr_16b[1]);
       return;
    } else {
       // need to check whether the links are available to be scheduled.
@@ -1169,8 +1173,10 @@ void sixtop_notifyReceiveLinkResponse(
                                                numOfcells, 
                                                schedule_ie->cellList, 
                                                bw) == FALSE){
+         printf("%02X MDP- ERROR adding tx CELL. Those cells are not available anymore\n", idmanager_getMyID(ADDR_16B)->addr_16b[1]);
          // link request failed,inform uplayer
       } else {
+         printf("%02X MDP- Adding tx CELL!!!! We were lucky!!!\n", idmanager_getMyID(ADDR_16B)->addr_16b[1]);
          sixtop_addCellsByState(frameID,
                                 bw,
                                 schedule_ie->cellList,

@@ -40,7 +40,7 @@ typedef enum {
 
 //=========================== typedef =========================================
 
-#define SIX2SIX_TIMEOUT_MS 2000
+#define SIX2SIX_TIMEOUT_MS 9000 /* 2000 */ // mdomingo: Modified to try to make it work on simulator
 
 //=========================== module variables ================================
 

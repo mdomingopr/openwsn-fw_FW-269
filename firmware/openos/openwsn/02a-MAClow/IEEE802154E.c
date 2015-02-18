@@ -866,7 +866,7 @@ port_INLINE void activity_ti1ORri1() {
                      printf("\n");
                      }
 #endif
-                     /* \TODO mdomingo: updated otf statistics */
+                     /* \TODO mdomingo: update otf statistics for the neighbor */
                      otf_notif_updateStatistics(&ieee154e_vars.asn, 
                                                 &(ieee154e_vars.dataToSend->l2_nextORpreviousHop), 
                                                 openqueue_macCountDataPacket(&(ieee154e_vars.dataToSend->l2_nextORpreviousHop))-1);
