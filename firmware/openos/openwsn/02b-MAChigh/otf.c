@@ -75,7 +75,7 @@ void     otf_notif_updateStatistics(asn_t* currentAsn, open_addr_t* address, uin
 #endif
 
 #if 1
-   printf("%02X ", idmanager_getMyID(ADDR_16B)->addr_16b[1]);
+   printf("%02X ", ((open_addr_t*) idmanager_getMyID(ADDR_16B))->addr_16b[1]);
    printf("*****OTF: ");
    printf("ASN: %04X, ", currentAsn->bytes0and1);
    printf("64B addr: ");
@@ -143,7 +143,7 @@ void otf_timer_cb() {
 void otf_printLocalVar() {
    uint8_t i;
    for(i=0;i<OTF_MAX_NUM_NEIGHBOR_STATISTICS;i++) {
-      printf("%02X ", idmanager_getMyID(ADDR_16B)->addr_16b[1]);
+      printf("%02X ", ((open_addr_t*) idmanager_getMyID(ADDR_16B))->addr_16b[1]);
       printf("%d ", otf_vars.neighbor[i].used);
       printf("%02X ", otf_vars.neighbor[i].address.addr_64b[7]);
       printf("%f ", otf_vars.neighbor[i].pid.prev_error);
@@ -164,7 +164,7 @@ void otf_timer_fired_task(void) {
    //Checking if more slots have to be added
    for (i=0; i<OTF_MAX_NUM_NEIGHBOR_STATISTICS; i++) {
       if (TRUE == otf_vars.neighbor[i].used) {
-         printf("%02X found neighbor %02X %f\n", idmanager_getMyID(ADDR_16B)->addr_16b[1],  otf_vars.neighbor[i].address.addr_64b[7], otf_vars.neighbor[i].pid.control);
+         printf("%02X found neighbor %02X %f\n", ((open_addr_t*) idmanager_getMyID(ADDR_16B))->addr_16b[1],  otf_vars.neighbor[i].address.addr_64b[7], otf_vars.neighbor[i].pid.control);
          //printPID(&otf_vars.neighbor[i].pid);
          //otf_printLocalVar();
          if (0.4 < otf_vars.neighbor[i].pid.control) {

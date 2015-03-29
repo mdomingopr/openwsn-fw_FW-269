@@ -9,6 +9,7 @@
 */
 
 #include "openwsn.h"
+#include "opentimers.h"
 
 //=========================== define ==========================================
 #define OTF_TIMER_PERIOD_MS               150000// 70000 //10s
