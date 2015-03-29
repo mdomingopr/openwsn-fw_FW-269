@@ -64,6 +64,16 @@ void otf_notif_removedCell(void) {
 #endif
 }
 
+
+/**
+\brief Notifies that the PID statistics of the OTF scheduler for a specific neighbor have to be updated or created
+
+\param[in] currentAsn current time
+\param[in] address address of the neighbor to update statistics
+\param[in] numMesgsQueue Number of messages remained to be sent in the tx queu
+
+\returns None
+*/
 void     otf_notif_updateStatistics(asn_t* currentAsn, open_addr_t* address, uint8_t numMesgsQueue) {
    uint8_t i;
    int kk;
@@ -167,6 +177,7 @@ void otf_timer_fired_task(void) {
          printf("%02X found neighbor %02X %f\n", ((open_addr_t*) idmanager_getMyID(ADDR_16B))->addr_16b[1],  otf_vars.neighbor[i].address.addr_64b[7], otf_vars.neighbor[i].pid.control);
          //printPID(&otf_vars.neighbor[i].pid);
          //otf_printLocalVar();
+         /** \todo mdomingo: MAGIC NUMBER!!! Should be a define in the header */
          if (0.4 < otf_vars.neighbor[i].pid.control) {
             printf("<<<<<<<>>>>><<<<>>>>OTFPID: ADDING A CELL to %02X!!!!!<<<<<>>>>>><<<>>\n", otf_vars.neighbor[i].address.addr_64b[7]);
             // call sixtop
